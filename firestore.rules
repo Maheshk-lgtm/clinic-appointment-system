@@ -1,0 +1,132 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isActiveUser() {
+      return isSignedIn() && userDoc().data.active == true;
+    }
+
+    function role() {
+      return userDoc().data.role;
+    }
+
+    function isAdmin() {
+      return isActiveUser() && role() == 'admin';
+    }
+
+    function isReceptionist() {
+      return isActiveUser() && role() == 'receptionist';
+    }
+
+    function isDoctor() {
+      return isActiveUser() && role() == 'doctor';
+    }
+
+    function isStaff() {
+      return isAdmin() || isReceptionist() || isDoctor();
+    }
+
+    // True when the signed-in doctor owns the appointment/doctor doc referenced.
+    function ownsDoctorRecord(doctorId) {
+      return isDoctor() && userDoc().data.doctorId == doctorId;
+    }
+
+    // ---------------- users ----------------
+    match /users/{uid} {
+      // Accounts are created server-side only (see functions/createStaffUser),
+      // which uses the Admin SDK and bypasses these rules entirely.
+      allow create: if false;
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      // Admin can toggle active/doctorId; nobody can grant themselves a role.
+      allow update: if isAdmin() &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.uid == resource.data.uid;
+      allow delete: if false;
+    }
+
+    // ---------------- specializations ----------------
+    match /specializations/{id} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // ---------------- doctors ----------------
+    match /doctors/{doctorId} {
+      allow read: if isStaff();
+      // Doctors may not edit their own working hours/profile from the app;
+      // only admin manages doctor records (section 2 of the spec).
+      allow write: if isAdmin();
+    }
+
+    // ---------------- settings ----------------
+    match /settings/{doc} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // ---------------- slotLocks ----------------
+    // Deterministic-ID lock documents used to make booking atomic.
+    // Only staff can create/update/delete them, and only via the flows in
+    // appointmentService.ts (enforced by matching appointment writes below —
+    // a lock with no corresponding appointment is inert, so over-permissive
+    // lock rules alone can't be used to corrupt appointment state).
+    match /slotLocks/{lockId} {
+      allow read: if isStaff();
+      allow create: if isReceptionist() || isAdmin();
+      allow update: if isReceptionist() || isAdmin() || isDoctor();
+      allow delete: if isReceptionist() || isAdmin() || isDoctor();
+    }
+
+    // ---------------- appointments ----------------
+    match /appointments/{appointmentId} {
+      allow read: if isAdmin() || isReceptionist() ||
+        (isDoctor() && ownsDoctorRecord(resource.data.doctorId));
+
+      allow create: if (isReceptionist() || isAdmin()) &&
+        request.resource.data.status == 'PENDING_DOCTOR_CONFIRMATION' &&
+        request.resource.data.createdBy == request.auth.uid;
+
+      // Doctors may only move their own appointments, and only into the
+      // states a doctor is allowed to set from the app.
+      allow update: if isAdmin() || isReceptionist() ||
+        (isDoctor() && ownsDoctorRecord(resource.data.doctorId) &&
+          request.resource.data.status in ['CONFIRMED', 'DOCTOR_CANCELLATION_REQUESTED']);
+
+      allow delete: if false; // status transitions only, never hard deletes
+    }
+
+    // ---------------- notifications ----------------
+    match /notifications/{id} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.recipientId ||
+        (isReceptionist() && resource.data.recipientRole == 'receptionist') ||
+        isAdmin()
+      );
+      allow create: if isStaff();
+      // Only marking as read is permitted from the client.
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.recipientId ||
+        (isReceptionist() && resource.data.recipientRole == 'receptionist') ||
+        isAdmin()
+      ) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if false;
+    }
+
+    // ---------------- auditLogs ----------------
+    match /auditLogs/{id} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

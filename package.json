@@ -1,0 +1,42 @@
+{
+  "name": "clinic-appointment-system",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:api": "tsx scripts/api-server.ts",
+    "dev:all": "npx concurrently \"npm run dev\" \"npm run dev:api\"",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx",
+    "seed": "tsx scripts/seed.ts",
+    "presentation": "node scripts/buildPresentation.cjs"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "firebase": "^10.13.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/parser": "^7.15.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "firebase-admin": "^12.3.1",
+    "postcss": "^8.4.40",
+    "pptxgenjs": "^4.0.1",
+    "tailwindcss": "^3.4.7",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vite": "^5.3.4"
+  }
+}
