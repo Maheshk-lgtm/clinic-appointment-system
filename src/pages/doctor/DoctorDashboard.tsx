@@ -359,13 +359,19 @@ export function DoctorDashboard() {
         onCancelAppointment={openCancellation}
       />
 
-      {/* Monthly Calendar View: Whole month slots booked with date and time */}
+      {/* Monthly Calendar View: Whole month slots booked with date and time & availability editor */}
       <DoctorMonthCalendar
         doctorId={effectiveDoctorId}
         selectedDate={selectedDate}
         onSelectDate={setSelectedDate}
         onAcceptAppointment={handleAccept}
         onCancelAppointment={openCancellation}
+        onAvailabilityChanged={() => {
+          setCalendarRefreshKey((k) => k + 1)
+          if (effectiveDoctorId) {
+            refreshDoctorDateCounts(effectiveDoctorId)
+          }
+        }}
         refreshKey={calendarRefreshKey}
       />
 

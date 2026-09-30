@@ -17,6 +17,7 @@ import {
   LoadingSpinner,
   Modal,
 } from '@/components/Primitives'
+import { formatTime12h } from '@/utils/dateUtils'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -246,7 +247,7 @@ export function DoctorRequestsPage() {
           <div>
             <p className="font-medium">{a.patientName}</p>
             <p className="text-sm text-slate-500">
-              {a.date} · {a.startTime}–{a.endTime} · {a.specializationName}
+              {a.date} · {formatTime12h(a.startTime)} – {formatTime12h(a.endTime)} · {a.specializationName}
             </p>
           </div>
 

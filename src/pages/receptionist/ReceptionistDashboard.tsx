@@ -13,7 +13,8 @@ import {
   getLocalISODate,
   getDateOffset,
   formatFriendlyDate,
-  getDateRelativeLabel
+  getDateRelativeLabel,
+  formatTime12h
 } from '@/utils/dateUtils'
 
 export function ReceptionistDashboard() {
@@ -228,7 +229,7 @@ export function ReceptionistDashboard() {
               >
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm font-semibold text-ink truncate">
-                    <span className="text-clinic-700 font-bold">{a.startTime}</span> · {a.patientName}
+                    <span className="text-clinic-700 font-bold">{formatTime12h(a.startTime)}</span> · {a.patientName}
                   </p>
                   <p className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">
                     Dr. {a.doctorName} · {a.specializationName} · Tel: {a.patientMobile}
@@ -236,7 +237,7 @@ export function ReceptionistDashboard() {
                   {a.status === 'DOCTOR_CANCELLATION_REQUESTED' && (
                     <p className="text-[11px] sm:text-xs text-orange-600 font-medium truncate mt-0.5">
                       Doctor note: {a.cancellationReason || 'Reschedule requested'}
-                      {a.nextAvailableDate ? ` (Next available: ${a.nextAvailableDate} ${a.nextAvailableTime || ''})` : ''}
+                      {a.nextAvailableDate ? ` (Next available: ${a.nextAvailableDate} ${formatTime12h(a.nextAvailableTime || '')})` : ''}
                     </p>
                   )}
                 </div>

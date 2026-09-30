@@ -62,9 +62,8 @@ service cloud.firestore {
     // ---------------- doctors ----------------
     match /doctors/{doctorId} {
       allow read: if isStaff();
-      // Doctors may not edit their own working hours/profile from the app;
-      // only admin manages doctor records (section 2 of the spec).
-      allow write: if isAdmin();
+      // Allow admin or the doctor who owns the record to update availability / profile
+      allow write: if isAdmin() || (isDoctor() && (userDoc().data.doctorId == doctorId || resource.data.userId == request.auth.uid));
     }
 
     // ---------------- settings ----------------

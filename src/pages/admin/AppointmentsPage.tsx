@@ -4,7 +4,7 @@ import { listDoctors } from '@/services/doctorService'
 import type { Appointment, AppointmentStatus, Doctor } from '@/types'
 import { Card, EmptyState, LoadingSpinner } from '@/components/Primitives'
 import { StatusBadge } from '@/components/StatusBadge'
-import { getLocalISODate, getDateOffset } from '@/utils/dateUtils'
+import { getLocalISODate, getDateOffset, formatTime12h } from '@/utils/dateUtils'
 
 const STATUSES: AppointmentStatus[] = [
   'PENDING_DOCTOR_CONFIRMATION',
@@ -140,7 +140,7 @@ export function AppointmentsPage() {
               >
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm font-semibold text-ink truncate">
-                    <span className="text-clinic-700 font-bold">{a.date}</span> · {a.startTime} · {a.patientName}
+                    <span className="text-clinic-700 font-bold">{a.date}</span> · {formatTime12h(a.startTime)} · {a.patientName}
                   </p>
                   <p className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">
                     Dr. {a.doctorName} · {a.specializationName} · Tel: {a.patientMobile}

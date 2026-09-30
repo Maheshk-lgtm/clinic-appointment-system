@@ -5,6 +5,7 @@ import { listAppointmentsAwaitingReceptionistAction, cancelAppointment, reschedu
 import { getDoctor, getSlotsForDoctorOnDate } from '@/services/doctorService'
 import type { Appointment, Doctor, Slot } from '@/types'
 import { Button, Card, EmptyState, LoadingSpinner, Modal } from '@/components/Primitives'
+import { formatTime12h } from '@/utils/dateUtils'
 
 export function ReschedulesPage() {
   const { profile } = useAuth()
@@ -93,12 +94,12 @@ export function ReschedulesPage() {
             <div>
               <p className="font-medium text-ink">{a.patientName}</p>
               <p className="text-sm text-slate-500">
-                Dr. {a.doctorName} · originally {a.date} {a.startTime}
+                Dr. {a.doctorName} · originally {a.date} {formatTime12h(a.startTime)}
               </p>
               <p className="text-sm text-orange-700 mt-1.5">"{a.cancellationReason}"</p>
               {a.nextAvailableDate && (
                 <p className="text-sm text-slate-500 mt-1">
-                  Doctor suggested: {a.nextAvailableDate} {a.nextAvailableTime}
+                  Doctor suggested: {a.nextAvailableDate} {formatTime12h(a.nextAvailableTime || '')}
                 </p>
               )}
             </div>
@@ -124,19 +125,19 @@ export function ReschedulesPage() {
             />
             {loadingSlots && <LoadingSpinner />}
             {!loadingSlots && (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {slots.map((s) => (
                   <button
                     key={s.startTime}
                     disabled={s.state !== 'AVAILABLE' || submitting}
                     onClick={() => confirmReschedule(s)}
-                    className={`rounded-lg border px-2 py-2 text-sm ${
+                    className={`rounded-lg border px-2 py-2 text-xs sm:text-sm font-medium ${
                       s.state === 'AVAILABLE'
                         ? 'border-clinic-300 text-clinic-800 hover:bg-clinic-50'
                         : 'border-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
                   >
-                    {s.startTime}
+                    {formatTime12h(s.startTime)}
                   </button>
                 ))}
               </div>

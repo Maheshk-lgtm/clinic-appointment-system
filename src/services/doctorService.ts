@@ -132,21 +132,130 @@ function weekdayOf(dateStr: string): Weekday {
  * "special" override.
  */
 export function isDoctorAvailableOnDate(doctor: Doctor, dateStr: string): boolean {
-  const exception = doctor.exceptions.find((e) => e.date === dateStr)
+  const exception = (doctor.exceptions || []).find((e) => e.date === dateStr)
   if (exception?.type === 'leave' || exception?.type === 'holiday') return false
   if (exception?.type === 'special') return true
 
-  const wh = doctor.workingHours.find((w) => w.day === weekdayOf(dateStr))
+  const wh = (doctor.workingHours || []).find((w) => w.day === weekdayOf(dateStr))
   return !!wh?.enabled
 }
 
+export function getDoctorAvailabilityForDate(
+  doctor: Doctor,
+  dateStr: string
+): {
+  status: 'available' | 'leave' | 'holiday' | 'special' | 'weekly_off'
+  label: string
+  start?: string
+  end?: string
+  reason?: string
+} {
+  const exceptions = doctor.exceptions || []
+  const ex = exceptions.find((e) => e.date === dateStr)
+  if (ex) {
+    if (ex.type === 'leave') {
+      return { status: 'leave', label: 'On Leave / Day Off', reason: ex.reason || 'Doctor on leave' }
+    }
+    if (ex.type === 'holiday') {
+      return { status: 'holiday', label: 'Holiday / Closed', reason: ex.reason || 'Clinic Holiday' }
+    }
+    if (ex.type === 'special') {
+      return {
+        status: 'special',
+        label: 'Special Working Hours',
+        start: ex.start,
+        end: ex.end,
+        reason: ex.reason || 'Custom shift'
+      }
+    }
+  }
+
+  const wh = (doctor.workingHours || []).find((w) => w.day === weekdayOf(dateStr))
+  if (wh?.enabled) {
+    return {
+      status: 'available',
+      label: 'Standard Working Hours',
+      start: wh.start,
+      end: wh.end
+    }
+  }
+
+  return {
+    status: 'weekly_off',
+    label: 'Weekly Day Off',
+    reason: 'Scheduled day off in regular weekly hours'
+  }
+}
+
+export async function setDoctorDayAvailability(
+  doctorId: string,
+  dateStr: string,
+  status: 'available' | 'leave' | 'special',
+  details?: { start?: string; end?: string; reason?: string }
+): Promise<Doctor> {
+  const docRef = doc(db, 'doctors', doctorId)
+  const snap = await getDoc(docRef)
+  if (!snap.exists()) {
+    throw new Error('Doctor profile not found')
+  }
+  const doctor = { id: snap.id, ...snap.data() } as Doctor
+  const existingExceptions = doctor.exceptions || []
+  const otherExceptions = existingExceptions.filter((e) => e.date !== dateStr)
+  const newExceptions = [...otherExceptions]
+
+  if (status === 'leave') {
+    newExceptions.push({
+      date: dateStr,
+      type: 'leave',
+      reason: details?.reason?.trim() || 'On leave'
+    })
+  } else if (status === 'special') {
+    newExceptions.push({
+      date: dateStr,
+      type: 'special',
+      start: details?.start || '09:00',
+      end: details?.end || '17:00',
+      reason: details?.reason?.trim() || 'Special working hours'
+    })
+  } else if (status === 'available') {
+    const wh = (doctor.workingHours || []).find((w) => w.day === weekdayOf(dateStr))
+    if (!wh?.enabled) {
+      newExceptions.push({
+        date: dateStr,
+        type: 'special',
+        start: details?.start || wh?.start || '09:00',
+        end: details?.end || wh?.end || '17:00',
+        reason: details?.reason?.trim() || 'Available (Weekly off override)'
+      })
+    }
+  }
+
+  await updateDoc(docRef, {
+    exceptions: newExceptions,
+    updatedAt: serverTimestamp()
+  })
+
+  return { ...doctor, exceptions: newExceptions }
+}
+
+export async function updateDoctorWeeklyHours(
+  doctorId: string,
+  workingHours: WorkingHours[]
+): Promise<void> {
+  const docRef = doc(db, 'doctors', doctorId)
+  await updateDoc(docRef, {
+    workingHours,
+    updatedAt: serverTimestamp()
+  })
+}
+
 function resolveWindow(doctor: Doctor, dateStr: string): { start: string; end: string; breakStart?: string; breakEnd?: string } | null {
-  const exception = doctor.exceptions.find((e) => e.date === dateStr)
+  const exception = (doctor.exceptions || []).find((e) => e.date === dateStr)
   if (exception?.type === 'leave' || exception?.type === 'holiday') return null
   if (exception?.type === 'special' && exception.start && exception.end) {
     return { start: exception.start, end: exception.end }
   }
-  const wh: WorkingHours | undefined = doctor.workingHours.find((w) => w.day === weekdayOf(dateStr))
+  const wh: WorkingHours | undefined = (doctor.workingHours || []).find((w) => w.day === weekdayOf(dateStr))
   if (!wh?.enabled) return null
   return { start: wh.start, end: wh.end, breakStart: wh.breakStart, breakEnd: wh.breakEnd }
 }

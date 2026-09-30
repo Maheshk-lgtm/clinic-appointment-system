@@ -124,22 +124,8 @@ export function DashboardLayout() {
             <span className="font-medium">Dental Practice & Multi-Doctor Scheduling Platform</span>
           </div>
 
-          {/* Right Action Area: Presentation Download, Notifications & User Profile */}
+          {/* Right Action Area: Notifications & User Profile */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            <a
-              href="/Book_My_Dentist_Field_Project_Presentation.pptx"
-              download="Book_My_Dentist_Field_Project_Presentation.pptx"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-200 hover:text-white border border-emerald-400/40 text-[11px] sm:text-xs font-semibold shadow-sm transition active:scale-95"
-              title="Download Field Project Presentation (PowerPoint .PPTX)"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              <span>Download PPTX</span>
-            </a>
-
             <NotificationBell />
 
             {/* User Profile Pill & Sign Out */}

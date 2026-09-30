@@ -6,6 +6,7 @@ import { listDoctorsBySpecialization, getSlotsForDoctorOnDate, isDoctorAvailable
 import { createTemporaryBooking, AppointmentError } from '@/services/appointmentService'
 import type { Doctor, Slot, Specialization } from '@/types'
 import { Button, Card, EmptyState, LoadingSpinner, Modal } from '@/components/Primitives'
+import { formatTime12h } from '@/utils/dateUtils'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -190,15 +191,15 @@ export function BookingPage() {
               <p className="text-sm text-slate-500 mb-3">
                 {doctor.name} · {date}
               </p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {slots.map((s) => (
                   <button
                     key={s.startTime}
                     disabled={s.state !== 'AVAILABLE'}
                     onClick={() => setSelectedSlot(s)}
-                    className={`rounded-lg border px-2 py-2.5 text-sm font-medium transition ${SLOT_STYLES[s.state]}`}
+                    className={`rounded-lg border px-2 py-2.5 text-xs sm:text-sm font-medium transition ${SLOT_STYLES[s.state]}`}
                   >
-                    {s.startTime}
+                    {formatTime12h(s.startTime)}
                   </button>
                 ))}
               </div>
@@ -232,7 +233,7 @@ export function BookingPage() {
             <div className="text-sm bg-slate-50 rounded-lg p-3 space-y-0.5">
               <p><span className="text-slate-500">Doctor:</span> {doctor.name}</p>
               <p><span className="text-slate-500">Date:</span> {date}</p>
-              <p><span className="text-slate-500">Time:</span> {selectedSlot.startTime} – {selectedSlot.endTime}</p>
+              <p><span className="text-slate-500">Time:</span> {formatTime12h(selectedSlot.startTime)} – {formatTime12h(selectedSlot.endTime)}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Patient name" value={patientName} onChange={setPatientName} required className="col-span-2" />

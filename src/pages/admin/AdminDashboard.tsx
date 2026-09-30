@@ -10,7 +10,8 @@ import {
   getLocalISODate,
   getDateOffset,
   formatFriendlyDate,
-  getDateRelativeLabel
+  getDateRelativeLabel,
+  formatTime12h
 } from '@/utils/dateUtils'
 
 export function AdminDashboard() {
@@ -231,7 +232,7 @@ export function AdminDashboard() {
                 >
                   <div className="min-w-0">
                     <p className="text-xs sm:text-sm font-semibold text-ink truncate">
-                      <span className="text-clinic-700 font-bold">{a.startTime}</span> · {a.patientName}
+                      <span className="text-clinic-700 font-bold">{formatTime12h(a.startTime)}</span> · {a.patientName}
                     </p>
                     <p className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">
                       Dr. {a.doctorName} · {a.specializationName}
